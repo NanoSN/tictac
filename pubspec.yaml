@@ -1,0 +1,7 @@
+name:  tictac
+description:  Command line tool for tic
+version: 0.0.1
+
+dependencies:
+  tic_development:
+    path: /Users/sam/Development/Projects/tic-development
