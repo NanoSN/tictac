@@ -6,7 +6,7 @@ class CommandParser {
   addParser(String subcommand) {}
 }
 
-void findCommandsInPath(){
+List<String> findCommandsInPath(){
   var paths = Platform.environment['PATH'].split(':');
   var seperator = Platform.pathSeparator;
 
@@ -14,32 +14,30 @@ void findCommandsInPath(){
 
   for (var path in paths){
     var dir = new Directory(path);
-    var lister = dir.list();
-    lister.onFile = (file) {
-      var filename = new Path(file).filename;
-      if(filename.startsWith('tictac_')){
-        commands.add(filename);
+    var files = dir.listSync();
+    for(final entity in dir.listSync()){
+      if(entity is File && entity.name.startsWith('tictac_')) {
+          commands.add(entity.name);
       }
-    };
-    lister.onDone = (done) => print('done $commands');
+    }
   }
+  return commands;
 }
 
-
-Future<Map> loadAvailableCommands(){
+Map<String, Path> loadAvailableCommands(){
   var completer = new Completer();
   Map<String, Path> commands = {};
   var dir = new File(new Options().script).directorySync();
-  var lister = dir.list();
-  lister.onFile = (file) {
-    var path = new Path(file);
-    if(path.filename.startsWith('tictac_')){
-      var cmd = path.filenameWithoutExtension.replaceAll('tictac_','');
-      commands[cmd] = path;
+  for(final entity in dir.listSync()){
+    if(entity is File) {
+      var path = new Path(entity.name);
+      if(path.filename.startsWith('tictac_')){
+        var cmd = path.filenameWithoutExtension.replaceAll('tictac_','');
+        commands[cmd] = path;
+      }
     }
-  };
-  lister.onDone = (done) => completer.complete(commands);
-  return completer.future;
+  }
+  return commands;
 }
 
 void run(Map commands){
@@ -58,17 +56,17 @@ void run(Map commands){
   print(command);
   args[0] = command.toString();
   Process.start(new Options().executable, args).then((process) {
-    var stdoutStream = new StringInputStream(process.stdout);
-    stdoutStream.onLine = () => print(stdoutStream.readLine());
-    var stderrStream = new StringInputStream(process.stderr);
-    stderrStream.onLine = () => print(stderrStream.readLine());    
-    //process.stderr.onData = process.stderr.read;
-    process.onExit = (exitCode) {
-      print('exit code: $exitCode');
-    };
-  });  
+    process.stdout
+      .transform(new StringDecoder())
+      .transform(new LineTransformer())
+      .listen((data) => print(data));
+    process.stderr
+      .transform(new StringDecoder())
+      .transform(new LineTransformer())
+      .listen((data) => print(data));
+  });
 }
 
 void main() {
-  loadAvailableCommands().then(run);
+  run(loadAvailableCommands());
 }
