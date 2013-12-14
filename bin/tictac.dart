@@ -1,53 +1,40 @@
-
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
+import 'package:tictac/util.dart';
+import 'package:path/path.dart' as p;
 
 class CommandParser {
   addParser(String subcommand) {}
 }
 
-List<String> findCommandsInPath(){
+Map<String, String> findInPathCommands(){
   var paths = Platform.environment['PATH'].split(':');
-  var seperator = Platform.pathSeparator;
-
-  var commands = [];
-
-  for (var path in paths){
-    var dir = new Directory(path);
-    var files = dir.listSync();
-    for(final entity in dir.listSync()){
-      if(entity is File && entity.name.startsWith('tictac_')) {
-          commands.add(entity.name);
-      }
-    }
+  var dirs = paths.map((_) => new Directory(_)).where((_) => _.exists());
+  var commands = {};
+  for (final dir in dirs){
+    commands.addAll(findTictacCommands(dir));
   }
   return commands;
 }
 
-Map<String, Path> loadAvailableCommands(){
-  var completer = new Completer();
-  Map<String, Path> commands = {};
-  var dir = new File(new Options().script).directorySync();
-  for(final entity in dir.listSync()){
-    if(entity is File) {
-      var path = new Path(entity.name);
-      if(path.filename.startsWith('tictac_')){
-        var cmd = path.filenameWithoutExtension.replaceAll('tictac_','');
-        commands[cmd] = path;
-      }
-    }
-  }
-  return commands;
+Map<String, String> findDefaultCommands(){
+  var dir = new File(Platform.script.path).parent;
+  return findTictacCommands(dir);
 }
 
-void run(Map commands){
-  var args = new Options().arguments;
+Map<String, String> findProjectCommands(){
+  var dir = new Directory(p.join(findProjectDirectory().path, 'tool'));
+  return findTictacCommands(dir);
+}
 
-  if(args.isEmpty)
-    return; //TODO: show help
+void run(List args, Map commands){
+  if(args.isEmpty) {
+    print('Available commands: ${commands.keys.join(' ')}');
+    return;
+  }
 
-
-  Path command = commands[args[0]];
+  String command = commands[args[0]];
   if(command == null){
     print('${args[0]} not found');
     return;
@@ -55,18 +42,22 @@ void run(Map commands){
 
   print(command);
   args[0] = command.toString();
-  Process.start(new Options().executable, args).then((process) {
+  Process.start(Platform.executable, args).then((process) {
     process.stdout
-      .transform(new StringDecoder())
-      .transform(new LineTransformer())
+      .transform(new Utf8Decoder())
+      .transform(new LineSplitter())
       .listen((data) => print(data));
     process.stderr
-      .transform(new StringDecoder())
-      .transform(new LineTransformer())
+      .transform(new Utf8Decoder())
+      .transform(new LineSplitter())
       .listen((data) => print(data));
   });
 }
 
-void main() {
-  run(loadAvailableCommands());
+void main(List args) {
+  var commands = {};
+  commands.addAll(findDefaultCommands());
+  commands.addAll(findInPathCommands());
+  commands.addAll(findProjectCommands());
+  run(args, commands);
 }

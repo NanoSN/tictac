@@ -29,7 +29,7 @@ dependencies:
   var file = new File.fromPath(new Path('$path/pubspec.yaml'));
   var sink = file.openWrite();
   sink
-    ..addString(content)
+    ..write(content)
     ..close();
 }
 
