@@ -26,7 +26,7 @@ dependencies:
     path: /Users/sam/Development/Projects/tic/
 """;
 
-  var file = new File.fromPath(new Path('$path/pubspec.yaml'));
+  var file = new File('$path/pubspec.yaml');
   var sink = file.openWrite();
   sink
     ..write(content)
@@ -35,7 +35,7 @@ dependencies:
 
 void create_directories(List<String> directories, {path: '.'}){
   for(final dir in directories)
-    new Directory.fromPath(new Path('$path/$dir')).createSync(recursive: true);
+    new Directory('$path/$dir').createSync(recursive: true);
 }
 
 main() {

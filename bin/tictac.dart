@@ -58,6 +58,10 @@ void main(List args) {
   var commands = {};
   commands.addAll(findDefaultCommands());
   commands.addAll(findInPathCommands());
-  commands.addAll(findProjectCommands());
+
+  try {
+    commands.addAll(findProjectCommands());
+  } catch (e) {}
+
   run(args, commands);
 }
