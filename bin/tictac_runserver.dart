@@ -16,7 +16,7 @@ void runServer(String basePath, int port) {
   server.listen('127.0.0.1', 8080);
   */
 
-  HttpServer.bind('127.0.0.1', 8080)
+  HttpServer.bind('127.0.0.1', port)
     .then((server){
       server.listen((req){
         if(req.uri.path == "/" || req.uri.path == '') {
@@ -29,7 +29,16 @@ void runServer(String basePath, int port) {
   print('listening for connections on $port');
 }
 
+void serveStaticFiles(String basePath, int port) {
+  HttpServer.bind('127.0.0.1', port)
+    .then((server){
+      server.listen((req){
+        new ClientFileHandler(basePath).onRequest(req, req.response);
+      });
+      print('listening for connections on $port');
+    });
+}
 main() {
   var directory = Directory.current;
-  runServer('${directory.path}', 8080);
+  serveStaticFiles('${directory.path}', 8000);
 }
