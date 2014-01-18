@@ -1,8 +1,9 @@
 name:  tictac
 description:  Command line tool for tic
 version: 0.0.1
+author: Sam E. <same@nanosn.com>
+homepage: https://github.com/NanoSN/tictac
 
 dependencies:
   path: any
-  tic_development:
-    path: /Users/sam/Development/Projects/tic-development
+  tic_development: '0.0.1'
